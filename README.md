@@ -48,6 +48,17 @@ PYDANTIC_AI_EXECUTION=temporal omnigent run examples -p "..."
 
 Test: `uv run python tests/test_harness_hitl.py`
 
+## Open problem: durable environment
+
+We have durable execution (Temporal), durable session + context (Omnigent), and
+fork. We do **not** have a durable *environment* — the working dir/sandbox the
+agent builds (cloned repo, edits, processes) lives on the worker/runner and is
+lost when it's reclaimed. So follow-ups that need prior filesystem state don't
+just work. The shape of the fix: **Temporal owns execution durability; a host or
+session-scoped volume owns workspace durability.** Pin a session to the host
+that holds its workspace so "continue" stays stateful; "fork" is fresh by
+default (optionally a cheap git-worktree copy if you want stateful forks).
+
 ## Patches to Omnigent
 
 Omnigent 0.1.x has no harness plugin point, so `scripts/patch_omnigent.py` adds `pydantic-ai` to two allowlists (`_HARNESS_MODULES`, `OMNIGENT_HARNESSES`). One more rough edge is handled in `harness.py`: Omnigent forwards approvals as `{type, data:{...}}` but the harness scaffold wants those fields flat (else it 422s and the turn hangs), so a small ASGI middleware flattens them. Clean upstream fixes: a plugin entry point, and forwarding flat or accepting the envelope.

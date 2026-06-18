@@ -5,29 +5,28 @@ serves create_app() over a unix socket — same contract as the built-in pi /
 claude-sdk wraps.
 """
 
-import json
-
 from fastapi import FastAPI
+from pydantic import ValidationError
 
 from omnigent.runtime.harnesses._executor_adapter import ExecutorAdapter
 
 from omnigent_pydantic_ai.executor import PydanticAIExecutor
+from omnigent_pydantic_ai.models import ApprovalEnvelope, FlatApproval
 
 
 def flatten_approval(body: bytes) -> bytes:
     """Rewrite Omnigent's approval envelope to the flat fields the scaffold wants.
 
-    The server forwards `{type: approval, data: {elicitation_id, action}}`, but
-    the harness scaffold's ApprovalEvent expects those fields at the top level —
-    otherwise it 422s and the elicitation Future never resolves (the turn hangs).
+    Omnigent forwards `{type: approval, data: {elicitation_id, action}}`, but the
+    scaffold's ApprovalEvent expects those flat — otherwise it 422s and the
+    elicitation Future never resolves (the turn hangs). Non-envelope bodies
+    (messages, already-flat approvals) fail to parse and pass through untouched.
     """
     try:
-        payload = json.loads(body)
-    except (json.JSONDecodeError, TypeError):
+        envelope = ApprovalEnvelope.model_validate_json(body)
+    except ValidationError:
         return body
-    if payload.get("type") == "approval" and isinstance(payload.get("data"), dict):
-        return json.dumps({"type": "approval", **payload["data"]}).encode()
-    return body
+    return FlatApproval.from_envelope(envelope).model_dump_json(exclude_none=True).encode()
 
 
 class FlattenApprovalEnvelope:

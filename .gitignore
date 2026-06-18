@@ -1,0 +1,7 @@
+.venv/
+.demo/
+.claude/
+__pycache__/
+*.pyc
+*.sock
+.python-version

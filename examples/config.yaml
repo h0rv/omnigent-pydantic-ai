@@ -1,0 +1,22 @@
+spec_version: 1
+name: review-agent
+description: Pydantic AI agent (Gemini on Vertex) running natively in Omnigent, with native human-in-the-loop approval on the commit tool.
+
+# Runs in-process behind the Omnigent harness RPC contract via our custom
+# `pydantic-ai` harness (pydantic_ai_harness.create_app). The agent itself —
+# model, tools, system prompt, the requires_approval commit gate — lives in
+# agent.py; this spec just selects the harness.
+executor:
+  type: omnigent
+  config:
+    harness: pydantic-ai
+
+prompt: |
+  You reconcile a batch and propose a commit. Call the commit tool to finalize
+  it. Commit requires human approval.
+
+os_env:
+  type: caller_process
+  cwd: .
+  sandbox:
+    type: none

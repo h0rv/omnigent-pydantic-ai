@@ -1,0 +1,19 @@
+[project]
+name = "omnigent-pydantic-ai"
+version = "0.1.0"
+description = "Run Pydantic AI agents natively inside Omnigent, in-process or on Temporal."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic-ai[slim]>=1.107.0",
+    "temporalio>=1.7",
+    # The Omnigent runtime (server/host/harness contract). Installed separately
+    # if not resolvable from your index — see README.
+    "omnigent>=0.1.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.18",
+    "ty>=0.0.50",
+]
